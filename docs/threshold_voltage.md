@@ -280,7 +280,7 @@ anyway.
 `vth_sqrt_extrapolation(curve, window)`, `elr_correction(vth, v_d)`; all in
 `transistor_iv.transfer`, see [api.md](api.md).
 
-References: A. Ortiz-Conde et al., Microelectron. Reliab. 42, 583 (2002), a survey of
-threshold-voltage extraction methods; H.-S. Wong et al., *Modeling of
+References: A. Ortiz-Conde et al., *A review of recent MOSFET threshold voltage extraction
+methods*, Microelectron. Reliab. 42, 583 (2002); H.-S. Wong et al., *Modeling of
 transconductance degradation and extraction of threshold voltage in thin oxide MOSFETs*,
 Solid-State Electron. 30, 953 (1987).
