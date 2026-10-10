@@ -10,3 +10,6 @@ dist/
 /runs/
 /results/
 /scratch
+
+# example outputs
+/examples/output/

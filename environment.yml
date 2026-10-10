@@ -1,0 +1,18 @@
+# Conda environment used to develop transistor-iv-analysis 1.0.0 and to produce the
+# numbers and figures in docs/.
+#   conda env create -f environment.yml
+#   conda activate transistor-iv-analysis
+#   pip install -e . --no-deps
+name: transistor-iv-analysis
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - python=3.11.17
+  - numpy=2.4.6
+  - scipy=1.17.1
+  - pandas=3.0.6
+  - matplotlib=3.11.2
+  - xlrd=2.0.2
+  - pytest=9.1.1
+  - pip

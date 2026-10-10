@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If you use this software in your research, please cite it as below."
+title: "transistor-iv-analysis: parameter extraction from transistor I-V curves"
+type: software
+authors:
+  - family-names: "Yi"
+    given-names: "Dong-Joon"
+    website: "https://iverydj.github.io/"
+version: "1.0.0"
+date-released: "2026-10-11"
+license: MIT
+repository-code: "https://github.com/iverydj/transistor-iv-analysis"
+keywords:
+  - field-effect transistor
+  - thin-film transistor
+  - threshold voltage
+  - subthreshold swing
+  - mobility
+  - hysteresis
+  - Keithley 4200

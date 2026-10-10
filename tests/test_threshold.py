@@ -84,3 +84,20 @@ def test_interpolated_window_points():
     c = interpolate_curve(np.arange(0, 10.01, 0.25), np.exp(np.arange(0, 10.01, 0.25)), "n")
     assert c.mean_step == pytest.approx(0.125)
     assert c.n_points(5.0, minimum=3) == 40       # 5 V, not 25 points of the nominal 0.2 V step
+
+
+def test_smoothed_gm_is_savitzky_golay_on_a_uniform_grid():
+    from scipy.signal import savgol_filter
+    from transistor_iv.transfer import transconductance
+    v = np.arange(-5, 5.0001, 0.2)
+    i = np.exp(v / 2) * (1 + 0.01 * np.sin(7 * v))
+    c = interpolate_curve(v, i, "n")
+    np.testing.assert_allclose(transconductance(c, 1.6),
+                               np.maximum(savgol_filter(c.i, 9, 2, deriv=1, delta=0.2), 0), rtol=1e-9, atol=1e-12)
+
+
+def test_settings_are_validated():
+    with pytest.raises(ValueError, match="ss_method"):
+        TransferSettings(ss_method="minimum")
+    with pytest.raises(ValueError, match="current_window"):
+        TransferSettings(ss_method="current_window")
