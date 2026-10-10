@@ -50,7 +50,7 @@ from transistor_iv import plot
 
 dev = tiv.Device.from_dielectric(width_um=100, length_um=10, eps_r=3.9, thickness_nm=100, polarity="n")
 curve = tiv.read_clarius_transfer("my_measurement.xls")[0]          # or read_transfer_csv(...)
-res = tiv.analyze_transfer(curve, dev, tiv.TransferSettings())       # defaults = original scripts
+res = tiv.analyze_transfer(curve, dev, tiv.TransferSettings())       # defaults: original scripts + bug fixes
 print(res.vth_global, res.ss, res.mu_fe_max, res.notes)
 plot.plot_analysis(res).savefig("analysis.png")
 ```

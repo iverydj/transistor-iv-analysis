@@ -71,10 +71,13 @@ transfer_example: 566 points, V_d = 10 V, segment -40 -> 50 V
   fit vth_interpol    V_g 21.75 .. 26.70 V, r = 1.000000
   fit vth_global      V_g 28.70 .. 33.50 V, r = 0.999999
   fit vth_sqrt        V_g 45.20 .. 50.00 V, r = 0.999916
+  fit vth_gm_tangent  V_g 20.45 .. 20.45 V, r = 1.000000
+  note vth_interpol_window: the vth_interpol window starts above the g_m maximum (20.4 V): it lies in the on-state, where a falling g_m bends the line
 ```
 
 The fit windows show where each extrapolation was made: the sqrt window at the very end
-of the sweep is the warning sign for `vth_sqrt`.
+of the sweep is the warning sign for `vth_sqrt`. The note does not change any value; here
+`vth_interpol` still agrees with `vth_global` within 0.3 V.
 
 ## Dual sweeps: `hysteresis_example.py`
 
@@ -133,21 +136,27 @@ Writes `all_results.csv` and, per file, the four tables of
 
 ## Known answers: `synthetic_demo.py`
 
-A model device (V_th = 2 V, SS = 200 mV/dec, mu = 10 cm²/Vs; n-type and its p-type mirror)
-at V_d = 0.1 V and 20 V, exact and with 0.3 % noise:
+A model device (V_th = 2 V, SS = 200 mV/dec, mu = 10 cm²/Vs; n-type, and a p-type device
+with all voltages and currents of opposite sign) at V_d = 0.1 V and 20 V, exact and with
+0.3 % noise:
 
 ```text
  noise polarity     regime  vth_current  vth_interpol  vth_global  vth_logderivative  vth_sqrt  vth_d2  vth_gm_tangent      ss  mu_fe_max  mu_sat_sqrt
  0.000        n     linear        1.956         2.050       2.050              1.600   -13.356   2.100           2.050 201.088     10.000        0.032
  0.000        n saturation        1.917         9.707       9.707              1.500     1.998  18.700          10.999 200.796      9.000        9.999
  0.000        p     linear       -1.956        -2.050      -2.050             -1.600    13.356  -2.100          -2.050 201.088     10.000        0.032
+ 0.000        p saturation       -1.917        -9.707      -9.707             -1.500    -1.998 -17.300         -10.999 200.796      9.000        9.999
  0.003        n     linear        1.956         2.052       2.099              1.600   -13.434  12.100           2.959 200.655     10.580        0.032
  0.003        n saturation        1.917         8.890       9.701              1.600     1.988  19.100          11.085 200.386      9.119        9.961
- ...
+ 0.003        p     linear       -1.956        -2.052      -2.099             -1.600    13.434 -12.100          -2.959 200.739     10.580        0.032
+ 0.003        p saturation       -1.917        -8.890      -9.701             -1.600    -1.988 -19.100         -11.085 200.444      9.119        9.961
 ```
 
 Read row by row: in the linear regime the linear extrapolations give V_th + V_d/2 = 2.05 V
 exactly and mu_fe_max = 10.000; in saturation only `vth_sqrt` and `mu_sat_sqrt` recover the
 model (and the "linear" mobility is 0.9 mu, the value of the linear formula at the end of a
-saturated sweep); with noise, `vth_d2` and `vth_gm_tangent` move most, as discussed in
-[threshold voltage](threshold_voltage.md).
+saturated sweep); in saturation the second derivative is a plateau, so `vth_d2` is
+ill-defined and differs between the polarities (17.3 vs 18.7 V); with noise, `vth_d2` and
+`vth_gm_tangent` move most, as discussed in [threshold voltage](threshold_voltage.md). The
+small SS differences between the noisy n and p rows come from the additive noise, which is not
+mirrored.

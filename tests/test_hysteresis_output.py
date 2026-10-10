@@ -58,3 +58,15 @@ def test_on_resistance_and_summary():
     assert family_symmetry(fam) == pytest.approx(tab.symmetry.mean())
     with pytest.raises(ValueError):
         OutputFamily("x", [1.0], [np.zeros(3)], [np.zeros(4)])
+
+
+def test_loop_area_noise_floor_and_missing_area(device):
+    s = device.sign
+    loop = hysteresis_sweep(s * -10, s * 20, 0.1, s * 0.1, device, s * 1.0, s * 0.8, 150, 10, i_leak=1e-13)
+    n = loop.v_g.size // 2
+    v, i = loop.v_g, loop.i_d
+    a0 = loop_area(v[:n], i[:n], v[n:], i[n:], noise_floor=0.0)
+    a1 = loop_area(v[:n], i[:n], v[n:], i[n:], noise_floor=1e-11)
+    assert 0 < a1 < a0                      # the floor removes the off-state part of the integral
+    h = analyze_hysteresis(loop, device, noise_floor=1.0)    # nothing above 1 A
+    assert np.isnan(h.loop_area) and "loop_area" in h.notes and np.isfinite(h.dvth["vth_current"])

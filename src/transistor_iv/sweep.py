@@ -11,8 +11,10 @@ With s = +1 for n-type and s = -1 for p-type, the methods work on
     u = s * V_g   (ascending),   a = |I_d|
 
 so that the current increases with u for both polarities. A p-type curve is
-therefore analysed exactly like the mirror image of an n-type curve, and
-voltages are mapped back with V = s * u.
+therefore analysed like the mirror image of an n-type curve (exactly so when
+the interpolation grid needs no inserted points, see
+:mod:`transistor_iv.transfer.interpolation`), and voltages are mapped back
+with V = s * u.
 """
 
 from __future__ import annotations

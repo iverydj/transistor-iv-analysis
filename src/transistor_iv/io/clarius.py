@@ -27,7 +27,7 @@ from .columns import find_column, find_numbered_columns
 from .curves import OutputFamily, TransferCurve
 
 SETTINGS_DIVIDER = "=" * 34
-BIAS_TOLERANCE = 1e-3  # V; a bias column varying less than this is constant
+BIAS_TOLERANCE = 1e-3  # V; a bias column varying less than this (or 1 % of its value) is constant
 
 
 @dataclass
@@ -54,7 +54,8 @@ class ClariusSheet:
         """Drain bias from the Settings block (NaN if the drain is swept or not listed).
 
         Rule of the original scripts: if the drain terminal's ``Step`` entry is
-        ``N/A`` (no drain sweep), the bias is its ``Start/Bias`` entry.
+        ``N/A``, the bias is its ``Start/Bias`` entry; NaN if that entry is not a
+        number (``N/A`` for a list sweep).
         """
         rows = {str(r[0]).strip(): r for r in self.settings if r}
         if "Device Terminal" not in rows or "Start/Bias" not in rows or "Step" not in rows:
@@ -65,7 +66,10 @@ class ClariusSheet:
         col = terminals.index("Drain")
         if str(rows["Step"][col]).strip() != "N/A":
             return float("nan")
-        return float(rows["Start/Bias"][col])
+        try:
+            return float(rows["Start/Bias"][col])
+        except ValueError:
+            return float("nan")
 
 
 def _cell(v) -> float:
@@ -118,11 +122,11 @@ def _drain_bias(sheet: ClariusSheet, vd_col: int | None) -> float:
     vd = sheet.column(vd_col)
     if vd.size == 0:
         return bias
-    if np.ptp(vd) > BIAS_TOLERANCE:
+    if np.ptp(vd) > max(BIAS_TOLERANCE, 0.01 * np.max(np.abs(vd))):
         raise ValueError(f"{sheet.name}: drain voltage {sheet.header[vd_col]!r} varies by {np.ptp(vd):g} V; "
                          f"this is not a transfer curve")
     value = float(np.median(vd))
-    if np.isfinite(bias) and abs(bias - value) > BIAS_TOLERANCE:
+    if np.isfinite(bias) and abs(bias - value) > max(BIAS_TOLERANCE, 0.01 * abs(value)):
         warnings.warn(f"{sheet.name}: the DrainV column says V_d = {value:g} V but the Settings block says "
                       f"{bias:g} V; using the column value", stacklevel=3)
     return value

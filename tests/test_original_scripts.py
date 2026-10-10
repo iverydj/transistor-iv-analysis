@@ -4,7 +4,9 @@
 script, run function by function on every example curve (n-type as measured,
 and the exact p-type mirror V_g -> -V_g, I_d -> -I_d, V_d -> -V_d).
 ``data/original_scripts_fixed_baseline.csv``: the same script with the bug
-fixes of docs/changes_from_original.md patched in (in the original V_g frame).
+fixes B1-B7 and B9 of docs/changes_from_original.md patched in (B8, the g_m
+smoothing, is compared through gm_window=None). Both are written by
+tests/tools/make_original_baselines.py, which needs the original script.
 Geometry: W = L = 5 um on 300 nm SiO2, TC_example1 from Conditions.xls.
 TC_example5 is analysed for sweep segments 1 (forward) and 2 (backward).
 The original rounds threshold voltages and SS to 3 decimals.
@@ -50,11 +52,17 @@ def rows(table, fname, seg, pol="n"):
     return table[(table.file == fname) & (table.segment == seg) & (table.polarity == pol)].iterrows()
 
 
+@pytest.fixture(scope="module")
+def unsmoothed_p():
+    return {job: ours(*job, polarity="p", gm_window=None) for job in JOBS}
+
+
 @pytest.mark.parametrize("job", JOBS)
-def test_reproduces_the_fixed_original_exactly(job, unsmoothed):
-    """Every quantity of every n-type curve equals the bug-fixed original (g_m unsmoothed as there)."""
-    res = unsmoothed[job]
-    for _, b in rows(FIXED, *job):
+@pytest.mark.parametrize("pol", ["n", "p"])
+def test_reproduces_the_fixed_original_exactly(job, pol, unsmoothed, unsmoothed_p):
+    """Every quantity of every curve equals the bug-fixed original (g_m unsmoothed as there)."""
+    res = (unsmoothed if pol == "n" else unsmoothed_p)[job]
+    for _, b in rows(FIXED, *job, pol):
         r = res[b["name"]]
         assert r.v_d == b.v_d
         for k in VTH:
@@ -90,21 +98,11 @@ def test_original_bugs_are_visible_in_the_baseline():
     assert shift.median() > 30
 
 
-def test_default_smoothing_changes_only_the_gm_maximum(unsmoothed):
-    smooth = ours("TC_example1.xls", -1)
-    for name, r in unsmoothed[("TC_example1.xls", -1)].items():
+@pytest.mark.parametrize("job", JOBS)
+def test_default_smoothing_changes_only_the_gm_quantities(job, unsmoothed):
+    """gm_window affects gm_max, v_gm_max, mu_fe_max and vth_gm_tangent, nothing else."""
+    smooth = ours(*job)
+    for name, r in unsmoothed[job].items():
         s = smooth[name]
-        assert s.mu_fe_max <= r.mu_fe_max * (1 + 1e-9)
-        for k in VTH + ["ss", "mu_sat_sqrt"]:
-            assert getattr(s, k) == getattr(r, k)
-
-
-def test_p_type_mirror_of_the_real_curves(unsmoothed):
-    for job in JOBS[:3]:
-        mirrored = ours(*job, polarity="p", gm_window=None)
-        for name, r in unsmoothed[job].items():
-            m = mirrored[name]
-            for k in VTH:
-                assert getattr(m, k) == pytest.approx(-getattr(r, k), abs=1e-9, nan_ok=True), (name, k)
-            for k in REL:
-                assert getattr(m, k) == pytest.approx(getattr(r, k), rel=1e-9, nan_ok=True), (name, k)
+        for k in VTH + ["ss", "on_off", "mu_sat_sqrt", "d_it"]:
+            assert getattr(s, k) == pytest.approx(getattr(r, k), abs=0, nan_ok=True), (name, k)

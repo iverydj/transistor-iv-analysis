@@ -2,7 +2,7 @@
 
 Regime flags
     ``flag_linear_regime``: |V_d| exceeds the overdrive V_g - V_th at the
-    low end of the vth_global fit window, so the linear-regime formulas
+    low end of the vth_global fit window (V_th = intercept - V_d/2), so the linear-regime formulas
     (vth_interpol, vth_global, mu_fe_max) are applied outside the linear regime.
     ``flag_saturation``: |V_d| is below the overdrive at the high end of the
     vth_sqrt fit window, so the device is not saturated where the
@@ -34,7 +34,7 @@ def _flags(curve: TransferCurve, res) -> dict[str, str]:
     ends = []
     g = res.fits.get("vth_global")
     if g is not None and np.isfinite(vd):
-        ov_low = min(s * g.v_range[0], s * g.v_range[1]) - s * g.vth
+        ov_low = min(s * g.v_range[0], s * g.v_range[1]) - s * (g.vth - curve.v_d / 2)
         if vd > ov_low:
             out["flag_linear_regime"] = f"|V_d| = {vd:g} V > V_g - V_th = {ov_low:.3g} V at the fit window start"
     q = res.fits.get("vth_sqrt")
@@ -67,4 +67,6 @@ def transfer_diagnostics(curve: TransferCurve, device: Device, settings, res) ->
     for key in ("mu_sat_sqrt", "mu_fe_max"):
         d = [abs(getattr(a, key) / getattr(res, key) - 1.0) for a in alt]
         out[f"{key}_sens"] = float(np.nanmax(d)) if d and np.isfinite(d).any() else np.nan
+    if settings.gm_window is None:
+        out["mu_fe_max_sens"] = np.nan          # no window to vary
     return out

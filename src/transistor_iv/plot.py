@@ -166,7 +166,7 @@ def plot_output(family: OutputFamily, title: str | None = None):
     return fig
 
 
-def plot_hysteresis(result: HysteresisResult, vth_key: str = "vth_sqrt"):
+def plot_hysteresis(result: HysteresisResult, vth_key: str = "vth_current"):
     """Forward and backward branches on a log axis with the ``vth_key`` threshold of each."""
     fig, ax = plt.subplots(figsize=(6, 4.2), constrained_layout=True)
     for res, col, tag in ((result.forward, SERIES[0], "forward"), (result.backward, SERIES[1], "backward")):

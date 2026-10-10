@@ -17,6 +17,7 @@ class AppConfig:
     seed: int = 3
     i_crit: float = 1e-8          # A
     d2_window: float = 1.0        # V, smoothed second derivative shown next to the raw one
+    theta: float = 0.02           # 1/V, mobility degradation of the vth_interpol pitfall panel
 
 
 def _line(ax, fit, x_end, color, label):
@@ -48,7 +49,7 @@ def fig_interpol(cfg, c, r):
     ic, reg, fit = r.curve, r.region, r.fits["vth_interpol"]
     n = ic.n_points(5.0, 3)
     last = min(reg.end + ic.n_points(3.0), ic.u.size - 1)
-    fig, ax = plt.subplots(1, 2, figsize=(10, 3.8), constrained_layout=True)
+    fig, ax = plt.subplots(1, 3, figsize=(15, 3.8), constrained_layout=True)
     a = ax[0]
     a.axvspan(*reg.v_range, color=BAND, zorder=0, label="subthreshold region")
     a.axvspan(ic.u[reg.start], ic.u[last], ymax=0.06, color=SERIES[2], alpha=0.6, label="allowed window starts")
@@ -67,6 +68,18 @@ def fig_interpol(cfg, c, r):
     ax[1].plot(ic.v_g[k], abs(rr[k]), "o", color=SERIES[1], ms=6, label="largest |r|")
     style_axes(ax[1], "window start $V_g$ (V)", "|r| of the window's line fit", "(b) the selection")
     ax[1].legend(fontsize=8, frameon=False)
+    # pitfall: mobility degradation makes the curve concave; the most linear window moves into the on-state
+    cd = linear_curve(theta=cfg.theta)
+    rd = analyze_transfer(cd, DEVICE)
+    fd, fg = rd.fits["vth_interpol"], rd.fits["vth_global"]
+    a = ax[2]
+    a.plot(rd.curves["v_g"], rd.curves["i_d"], color=INK, linewidth=1.2)
+    _line(a, fd, fd.v_range[1], SERIES[1], f"vth_interpol = {rd.vth_interpol:.2f} V (window {fd.v_range[0]:.1f}-{fd.v_range[1]:.1f} V)")
+    _line(a, fg, fg.v_range[1], SERIES[2], f"vth_global = {rd.vth_global:.2f} V")
+    a.axvline(rd.v_gm_max, color=INK_2, linestyle=":", linewidth=0.8, label=f"$g_m$ maximum ({rd.v_gm_max:.1f} V)")
+    a.set_ylim(bottom=0)
+    style_axes(a, "$V_g$ (V)", "$|I_d|$ (A)", f"(c) pitfall: mobility degradation, theta = {cfg.theta:g} 1/V")
+    a.legend(fontsize=7, frameon=False, loc="upper left")
     save(fig, "vth_interpol")
 
 

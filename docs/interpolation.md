@@ -8,23 +8,31 @@ once per curve by `transistor_iv.transfer.interpolate_curve` (called by
 ## Algorithm
 
 1. **One monotonic segment.** The analysed segment (`TransferSettings.segment`, see
-   [polarity and units](polarity_and_units.md#sweeps-and-segments)) is put in the
-   on-direction frame u = s V_g (s = +1 for n-type, -1 for p-type), so that the current
-   increases with u. Repeated V_g values are dropped (the first one is kept).
+   [polarity and units](polarity_and_units.md#sweeps-and-segments)) is put in ascending V_g
+   order, for both polarities. Repeated V_g values are dropped (the first one is kept).
 2. **Spline of the log current.** log10|I_d| (with |I_d| clipped at 1e-20 A) is
    interpolated with a cubic smoothing spline,
-   `scipy.interpolate.UnivariateSpline(u, log10|I_d|, s=spline_smoothing)`.
+   `scipy.interpolate.UnivariateSpline(V_g, log10|I_d|, s=spline_smoothing)`.
    With the default `spline_smoothing = 0` the spline passes exactly through every
    measured point.
 3. **Evaluation grid.** The spline is evaluated at the measured points plus points
    inserted into every gap wider than `grid_step` (default 0.2 V), at multiples of
-   `grid_step` from the left end of the gap. A 0.25 V gap gets one point (+0.2 V), a
-   1 V gap four. Data measured with steps of 0.2 V or less are used as they are.
-4. **Derived arrays.** I = 10^spline on the grid, and the log slope
+   `grid_step` from the lower-V_g end of the gap. A 0.25 V gap gets one point (+0.2 V), a
+   1 V gap four; a point that would land within 1 % of a step of the next data point is not
+   inserted. Data measured with steps of 0.2 V or less are used as they are.
+4. **Derived arrays.** I = 10^spline on the grid, and the log slope in the on-direction
 
-   $$\frac{d\log_{10}|I_d|}{du} \quad (\text{dec/V}),$$
+   $$s\,\frac{d\log_{10}|I_d|}{dV_g} \quad (\text{dec/V}),$$
 
    computed with `np.gradient` and set to 1e-12 dec/V wherever it is not positive.
+5. **On-direction frame.** The arrays are stored in u = s V_g (s = +1 for n-type, -1 for
+   p-type), ascending, so that every method treats both polarities alike
+   ([polarity and units](polarity_and_units.md)).
+
+Steps 1-4 are those of the original scripts, in ascending V_g for both polarities. The
+inserted points are therefore anchored at the lower-V_g end of each gap for p-type too, and a
+p-type curve gives exactly the mirrored results of the corresponding n-type curve only when
+no points are inserted.
 
 ![Interpolation](figures/interpolation.png)
 
@@ -39,7 +47,7 @@ tolerance the grid is the data itself. Script: `figures/make_interpolation.py`.*
 
 | `TransferSettings` field | default | meaning |
 |---|---|---|
-| `grid_step` | 0.2 V | largest spacing of the evaluation grid; `None` evaluates at the data points only |
+| `grid_step` | 0.2 V | step of the points inserted into wider gaps; `None` evaluates at the data points only |
 | `spline_smoothing` | 0.0 | `s` of `UnivariateSpline` on log10\|I_d\|; 0 = exact interpolation |
 
 ## Window lengths on the grid
@@ -59,8 +67,11 @@ to the last point. On a non-uniform grid (0.25 V data give alternating 0.2 V and
   the scale is the sum of squared residuals in decades), the derivative windows
   `gm_window` and `d2_window`, or the window-free methods.
 * **Single-precision voltages.** Instruments often store V_g in single precision
-  (0.2 V becomes 0.2000000x V). Gaps that exceed a multiple of `grid_step` by less than
-  1 % of a step are therefore not split (see the figure).
+  (0.2 V becomes 0.2000000x V). A point that would land within 1 % of a step of the next
+  data point is therefore not inserted (see the figure).
+* **Alternating spacing.** Data with steps slightly above `grid_step` (0.25 V) get a grid of
+  alternating 0.2 and 0.05 V spacings, on which point-wise derivatives of noisy data scatter
+  more; for such data consider `grid_step=None`.
 * **Non-uniform list sweeps.** If the step changes along the sweep, a window holds a
   fixed number of grid points and covers a different voltage span in the coarse and
   the fine parts.

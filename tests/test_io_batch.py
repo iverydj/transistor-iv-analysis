@@ -78,3 +78,20 @@ def test_batch_tables_are_valid_csv(tmp_path):
     assert list(back.name) == ["dev(2,5), first", "flat"]
     assert float(back.vth_global.iloc[0]) == pytest.approx(res[0].vth_global)
     assert pd.read_csv(paths[1]).shape[1] == 4
+
+
+def test_csv_round_trip_keeps_the_current(tmp_path):
+    c = read_quiet("TC_example2.xls")[3]
+    write_transfer_csv(c, tmp_path / "c.csv")
+    np.testing.assert_array_equal(read_transfer_csv(tmp_path / "c.csv").i_d, c.i_d)
+    df = pd.read_csv(tmp_path / "c.csv", float_precision="round_trip")
+    df["comment"] = "x"                                          # an extra text column is ignored
+    df.to_csv(tmp_path / "d.csv", index=False, float_format="%.17g")
+    np.testing.assert_array_equal(read_transfer_csv(tmp_path / "d.csv").v_g, c.v_g)
+
+
+def test_list_sweep_settings_give_no_drain_bias():
+    from transistor_iv.io import ClariusSheet
+    rows = [["Device Terminal", "Drain", "Gate"], ["Step", "N/A", "N/A"], ["Start/Bias", "N/A", "N/A"]]
+    sheet = ClariusSheet("s", ["DrainI"], np.zeros((0, 1)), rows)
+    assert np.isnan(sheet.settings_drain_bias())

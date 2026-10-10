@@ -35,9 +35,11 @@ $$\text{score} = 100\left[1 - \frac{\mathrm{RMS}\big(y(+V_d) - y(-V_d)\big)}{\ma
 family (the value the original scripts printed in the figure title).
 
 **Pitfalls.** It is a relative number: a curve with a small dynamic range (flat |I_d|)
-scores low even for modest asymmetry, because std(y) is small. An exact zero current makes
-ln|I_d| undefined (`ValueError`). It says nothing about the cause (contacts, ambipolarity,
-gate leakage).
+scores low even for modest asymmetry, because std(y) is small; conversely the deep notch of
+ln|I_d| at V_d close to 0, which is part of std(y) (as in the original scripts), raises the
+score of curves measured through V_d = 0. An exact zero current anywhere makes ln|I_d|
+undefined (`ValueError`), also at V_d = 0 where the point is not paired. It says nothing about
+the cause (contacts, ambipolarity, gate leakage).
 
 ## Low-bias resistance (addition)
 

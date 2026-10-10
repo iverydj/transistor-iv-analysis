@@ -22,7 +22,7 @@ from dataclasses import dataclass
 import numpy as np
 from scipy.ndimage import median_filter
 
-from .._numerics import linear_fit
+from .._numerics import argext_low_v, linear_fit
 from ..errors import ExtractionError
 from ..sweep import on_direction
 from .interpolation import InterpolatedCurve
@@ -62,7 +62,8 @@ def subthreshold_region(curve: InterpolatedCurve, sensitivity: float = 1.4) -> S
 
     With the default ``sensitivity = 1.4`` the threshold is 0.040 dec/V (a
     point-wise swing of at most 25 V/dec); a larger value widens the region.
-    Of equally long runs the first (lowest on-direction voltage) is taken.
+    Of equally long runs the one at the lowest V_g is taken (as in the original
+    scripts, for both polarities).
     """
     idx = np.flatnonzero(np.log10(curve.dlog + 1e-12) >= -sensitivity)
     if idx.size == 0:
@@ -71,7 +72,7 @@ def subthreshold_region(curve: InterpolatedCurve, sensitivity: float = 1.4) -> S
     breaks = np.flatnonzero(np.diff(idx) != 1)
     starts = np.r_[idx[0], idx[breaks + 1]]
     ends = np.r_[idx[breaks], idx[-1]]
-    k = int(np.argmax(ends - starts))
+    k = argext_low_v(ends - starts, curve.s)
     start, end = int(starts[k]), int(ends[k])
     return SubthresholdRegion(start, end, _v_range(curve.s, curve.u[start], curve.u[end]))
 
@@ -94,7 +95,7 @@ def subthreshold_swing(curve: InterpolatedCurve, region: SubthresholdRegion,
     ok = np.ones(ss.size, bool) if floor is None else ss >= floor
     if not ok.any():
         raise ExtractionError(f"no point-wise SS >= {floor} mV/dec in the subthreshold region")
-    k = int(np.flatnonzero(ok)[np.argmin(ss[ok])])
+    k = int(np.flatnonzero(ok)[argext_low_v(ss[ok], curve.s, "min")])
     u, i = curve.u[sl][k], curve.i[sl][k]
     return SwingResult(float(ss[k]), _v_range(curve.s, u, u), (float(i), float(i)), "pointwise")
 

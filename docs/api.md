@@ -41,7 +41,7 @@ section explain the methods.
 | name | description |
 |---|---|
 | `analyze_transfer(curve, device, settings=TransferSettings())` | every quantity of one curve -> `TransferResult` |
-| `TransferSettings(...)` | every choice, defaults = original scripts; fields in the table below |
+| `TransferSettings(...)` | every choice; defaults follow the original scripts except the bug fixes (`gm_window`); fields in the table below |
 | `TransferResult` | scalars (`vth_current`, `vth_interpol`, `vth_global`, `vth_logderivative`, `vth_sqrt`, `vth_d2`, `vth_gm_tangent`, `ss`, `i_on`, `i_off`, `on_off`, `gm_max`, `v_gm_max`, `mu_fe_max`, `mu_sat_sqrt`, `d_it`), `swing`, `region`, `fits`, `curve`, `curves`, `notes`, `diagnostics`; `summary()` -> dict |
 | `VTH_FIELDS` | the seven threshold-voltage field names |
 
@@ -49,8 +49,12 @@ section explain the methods.
 `ss_sensitivity=1.4`, `ss_method="pointwise"`, `ss_floor=60.0`, `ss_decades=1.0`,
 `ss_i_min=None`, `ss_current_window=None`, `i_crit=1e-8`, `cc_interpolation="linear"`,
 `linear_window=5.0`, `linear_extension=3.0`, `vd_correction=False`, `gm_window=1.6`,
-`d2_window=None`, `min_overdrive=1.0`, `off_level="min"`, `temperature=300.0`,
-`diagnostics=False`.
+`d2_window=None`, `min_overdrive=1.0`, `mobility_vth="vth_interpol"`, `off_level="min"`,
+`temperature=300.0`, `diagnostics=False`. Invalid choices raise `ValueError`.
+
+`TransferResult.notes` explains every NaN and carries plausibility notes that do not change
+any value: `polarity`, `ss_on_state`, `vth_interpol_window`, `<fit>_window` (truncated
+window).
 
 **Building blocks** (each works on one monotonic segment)
 
@@ -76,7 +80,7 @@ section explain the methods.
 
 | name | description |
 |---|---|
-| `analyze_hysteresis(curve, device, settings, segments=None, noise_floor=1e-12)` | -> `HysteresisResult(name, forward, backward, dvth, n_trap, loop_area, noise_floor)`, `.summary()` |
+| `analyze_hysteresis(curve, device, settings, segments=None, noise_floor=1e-12)` | -> `HysteresisResult(name, forward, backward, dvth, n_trap, loop_area, noise_floor, notes)`, `.summary()` |
 | `split_dual_sweep(v_g, segments=None)` | forward and backward index arrays |
 | `loop_area(v_fwd, i_fwd, v_bwd, i_bwd, noise_floor=1e-12)` | dec V |
 | `d_it_from_ss(ss, c_i, temperature=300)`, `thermal_ss_limit(temperature)`, `n_trap_from_dvth(dvth, c_i)` | formulas |
@@ -102,7 +106,7 @@ string = no problem) and `vth_interpol_sens`, `vth_global_sens`, `vth_sqrt_sens`
 ## Figures — `transistor_iv.plot`
 
 `plot_transfer(curve)`, `plot_analysis(result)`, `plot_overlay(curves, log=True)`,
-`plot_output(family, title=None)`, `plot_hysteresis(result, vth_key="vth_sqrt")`; each
+`plot_output(family, title=None)`, `plot_hysteresis(result, vth_key="vth_current")`; each
 returns a matplotlib figure. Import with `from transistor_iv import plot`.
 
 ## Synthetic curves — `transistor_iv.synthetic`

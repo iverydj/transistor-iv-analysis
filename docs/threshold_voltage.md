@@ -72,20 +72,32 @@ curve that starts in or just above the subthreshold region.
    `end + floor(3 V / mean spacing)` (`linear_extension`, towards the on-state), and
    ending before the end of the sweep.
 3. Fit every candidate with least squares and keep the one with the largest |r|
-   (Pearson correlation coefficient; the first of equal ones).
+   (Pearson correlation coefficient; of equal ones the one at the lowest V_g).
 4. V_th = -b/m of that line. If no full window fits before the end of the sweep, the
    remaining points from `start` are fitted.
 
 ![Linear fit next to the subthreshold region](figures/vth_interpol.png)
 
 *(a) The subthreshold region (shaded), the allowed window starts (bar), the chosen
-window and its extrapolation. (b) |r| of every candidate: the most linear window
-starts just above turn-on.*
+window and its extrapolation. (b) |r| of every candidate: on this curve (constant mobility)
+the most linear window starts just above turn-on. (c) The same device with mobility
+degradation, mu / (1 + theta (V_g - V_th)) with theta = 0.02 1/V: the curve is concave, the
+most linear window lies far in the on-state and the intercept is -2.2 V, while `vth_global`
+stays at 2.0 V.*
 
-**Valid** in the linear regime (|V_d| much smaller than V_g - V_th over the window).
-Mu_eff and mu_sat use this value (see [mobility](mobility.md)).
+**Valid** in the linear regime (|V_d| much smaller than V_g - V_th over the window), on
+curves with a straight part just above threshold. The point-wise mu_eff and mu_sat use this
+value by default (`mobility_vth`, see [mobility](mobility.md)).
 
-**Pitfalls.** The region criterion (0.040 dec/V) is not strictly subthreshold: in the
+**Pitfalls.** *Concave curves.* With mobility degradation (or contact resistance) the curve
+bends down above threshold; the most linear window is then a nearly straight stretch high in
+the on-state, and its intercept lies far below V_th: on the model device -0.3 V, -2.2 V and
+-6.5 V for theta = 0.01, 0.02 and 0.05 1/V (V_th = 2 V), panel (c). `analyze_transfer` adds the
+note `vth_interpol_window` when the window starts above the g_m maximum; compare with
+`vth_global` and `vth_gm_tangent`. (Listed for the author's decision in
+[changes_from_original.md](changes_from_original.md), D9.)
+
+*Wide region.* The region criterion (0.040 dec/V) is not strictly subthreshold: in the
 linear regime the log slope above threshold is 1/[ln(10)(V_g - V_th - V_d/2)], which
 stays above 0.040 dec/V up to about 11 V above threshold, so the windows can start
 well into the on-state (panel a). Near-linear stretches differ in |r| only in the
@@ -155,8 +167,8 @@ threshold 10^-1.4 dec/V and the maximum.*
 **Validity.** This is the steepest point of the subthreshold characteristic, which lies
 below the strong-inversion threshold. It is a reproducible turn-on marker, but not a
 threshold voltage in the sense of the other methods. It is also different from the
-"transconductance-to-current ratio" method, which takes the maximum of the derivative of
-g_m/I_d. (This point is listed for the author's decision in
+"transconductance-to-current ratio" method, which takes the minimum (negative peak) of the
+derivative of g_m/I_d. (This point is listed for the author's decision in
 [changes_from_original.md](changes_from_original.md).)
 
 **Pitfalls.** On a nearly exponential subthreshold region the log slope is flat and the
@@ -235,13 +247,29 @@ anyway.
 
 * Report the method and its parameters with every V_th; values from different methods
   differ by volts on real devices.
-* Linear regime (small |V_d|): `vth_global` or `vth_gm_tangent` (with or without the V_d/2
-  correction, stated), `vth_d2` with smoothing; saturation: `vth_sqrt`.
+* Linear regime (small |V_d|): `vth_global` (with or without the V_d/2 correction, stated);
+  `vth_gm_tangent` and `vth_d2` (with `d2_window`) on low-noise curves only, since both use
+  the maximum of a derivative; `vth_interpol` only after checking its window. Saturation:
+  `vth_sqrt`.
 * For comparing many devices or hysteresis shifts, `vth_current` is the most robust,
   provided I_crit lies well above the noise and in the same part of the curve for all
   devices.
 * Inspect the fits: `TransferResult.fits[...]` holds every line (`v_range`, `r`), and
   `transistor_iv.plot.plot_analysis(result)` draws them.
+
+## Parameters
+
+| `TransferSettings` field | default | used by |
+|---|---|---|
+| `i_crit` | 1e-8 A | `vth_current` |
+| `cc_interpolation` | `"linear"` (`"log"`) | `vth_current` |
+| `linear_window` | 5.0 V | `vth_interpol`, `vth_global`, `vth_sqrt` |
+| `linear_extension` | 3.0 V | `vth_interpol` (window starts up to this far past the region) |
+| `ss_sensitivity` | 1.4 | the region used by `vth_interpol`, `vth_logderivative` |
+| `gm_window` | 1.6 V (`None` = unsmoothed) | `vth_gm_tangent` |
+| `d2_window` | `None` (unsmoothed) | `vth_d2` |
+| `vd_correction` | `False` | `vth_interpol`, `vth_global`, `vth_gm_tangent`, `vth_d2` |
+| `grid_step`, `spline_smoothing` | 0.2 V, 0 | every method except `vth_current` ([interpolation](interpolation.md)) |
 
 ## Functions
 

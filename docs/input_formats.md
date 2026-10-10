@@ -36,10 +36,12 @@ prefix match of either:
 
 | quantity | default candidates | required |
 |---|---|---|
-| drain current | DrainI, DrainI_A, Id, I_d, Drain I, Drain I (A), Id(A) | yes |
-| gate voltage | GateV, Vg, V_g, Gate V, Gate V (V), Vg(V) | yes |
-| drain voltage | DrainV, Vd, V_d, Drain V, Drain V (V) | no |
-| gate current | GateI, Ig, I_g, Gate I, Gate I (A), GateI_A | no |
+| drain current | DrainI, DrainI_A, Id, Drain I, Drain I (A), Id(A) | yes |
+| gate voltage | GateV, Vg, Gate V, Gate V (V), Vg(V) | yes |
+| drain voltage | DrainV, Vd, Drain V, Drain V (V) | no |
+| gate current | GateI, Ig, Gate I, Gate I (A), GateI_A | no |
+
+(`I_d`, `V_g`, ... match `Id`, `Vg`, ... after normalisation.)
 
 Clarius numbers the columns of tests that store several curves per sheet: `DrainI(1)`,
 `DrainI(2)`, ... For transfer sheets the prefix match reads the first of them; output-curve
@@ -49,12 +51,13 @@ pad shorter columns are removed; an empty cell inside the data raises `ValueErro
 **Drain bias of a transfer sheet.**
 
 * If the sheet has a drain-voltage column, its median is used; it must be constant within
-  1 mV (otherwise the sheet is not a transfer curve, `ValueError`).
-* Otherwise the `Settings` block is used: if the drain terminal's `Step` entry is `N/A`
-  (no drain sweep), its `Start/Bias` entry.
-* If both exist and differ by more than 1 mV, the column value is used and a `UserWarning`
-  names the sheet (one bundled sheet's Settings block says 20 V while its data column and
-  its name say 10 V).
+  1 mV or 1 % (otherwise the sheet is not a transfer curve, `ValueError`).
+* Otherwise the `Settings` block is used (rule of the original scripts): if the drain
+  terminal's `Step` entry is `N/A`, its `Start/Bias` entry; NaN if that entry is not a number
+  (`N/A` for a list sweep).
+* If both exist and differ by more than 1 mV or 1 %, the column value is used and a
+  `UserWarning` names the sheet (one bundled sheet's Settings block says 20 V while its data
+  column and its name say 10 V).
 * If neither exists, `v_d` is NaN: the mobilities and the V_d/2 correction are then
   unavailable.
 

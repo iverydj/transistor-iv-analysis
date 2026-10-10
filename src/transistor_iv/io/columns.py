@@ -1,7 +1,7 @@
 """Column-header matching shared by the Clarius and CSV readers.
 
 Headers are compared after lower-casing and removing every non-alphanumeric
-character, so ``"Drain I (A)"`` matches ``"draini a"``. A column is found by,
+character, so ``"Drain I (A)"`` becomes ``"driania"`` and ``"I_d"`` matches ``"Id"``. A column is found by,
 in this order: an exact match of the user-given header, an exact match of
 one of the default candidates, a prefix match of either.
 """
@@ -11,10 +11,10 @@ from __future__ import annotations
 import re
 
 DEFAULT_CANDIDATES: dict[str, tuple[str, ...]] = {
-    "i_d": ("DrainI", "DrainI_A", "Id", "I_d", "Drain I", "Drain I (A)", "Id(A)"),
-    "v_g": ("GateV", "Vg", "V_g", "Gate V", "Gate V (V)", "Vg(V)"),
-    "v_d": ("DrainV", "Vd", "V_d", "Drain V", "Drain V (V)"),
-    "i_g": ("GateI", "Ig", "I_g", "Gate I", "Gate I (A)", "GateI_A"),
+    "i_d": ("DrainI", "DrainI_A", "Id", "Drain I", "Drain I (A)", "Id(A)"),
+    "v_g": ("GateV", "Vg", "Gate V", "Gate V (V)", "Vg(V)"),
+    "v_d": ("DrainV", "Vd", "Drain V", "Drain V (V)"),
+    "i_g": ("GateI", "Ig", "Gate I", "Gate I (A)", "GateI_A"),
 }
 
 

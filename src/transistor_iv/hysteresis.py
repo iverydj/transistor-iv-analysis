@@ -20,7 +20,7 @@ import numpy as np
 from scipy.integrate import trapezoid
 
 from .device import Device
-from .errors import CurveError
+from .errors import CurveError, ExtractionError
 from .io.curves import TransferCurve
 from .sweep import monotonic_segments
 from .transfer.analysis import VTH_FIELDS, TransferResult, TransferSettings, analyze_transfer
@@ -70,7 +70,7 @@ def loop_area(v_fwd, i_fwd, v_bwd, i_bwd, noise_floor: float = 1e-12) -> float:
     yb = 10.0 ** np.interp(grid, vb, np.log10(np.maximum(ab, 1e-300)))
     m = (yf > noise_floor) & (yb > noise_floor)
     if m.sum() < 2:
-        raise CurveError(f"fewer than 2 points above the noise floor {noise_floor:g} A in both branches")
+        raise ExtractionError(f"fewer than 2 points above the noise floor {noise_floor:g} A in both branches")
     return float(trapezoid(np.log10(yf[m]) - np.log10(yb[m]), grid[m]))
 
 
@@ -85,6 +85,7 @@ class HysteresisResult:
     n_trap: dict[str, float]
     loop_area: float
     noise_floor: float
+    notes: dict[str, str]
 
     def summary(self) -> dict:
         row: dict[str, object] = {"name": self.name}
@@ -94,7 +95,7 @@ class HysteresisResult:
             row[f"d{key}"] = self.dvth[key]
             row[f"n_trap_{key[4:]}"] = self.n_trap[key]
         row.update(ss_fwd=self.forward.ss, ss_bwd=self.backward.ss, loop_area=self.loop_area,
-                   noise_floor=self.noise_floor)
+                   noise_floor=self.noise_floor, notes="; ".join(f"{k}: {v}" for k, v in self.notes.items()))
         return row
 
 
@@ -115,5 +116,9 @@ def analyze_hysteresis(curve: TransferCurve, device: Device, settings: TransferS
     rf, rb = analyze_transfer(fwd, device, st), analyze_transfer(bwd, device, st)
     dvth = {k: getattr(rb, k) - getattr(rf, k) for k in VTH_FIELDS}
     n_trap = {k: n_trap_from_dvth(dv, device.c_i) if np.isfinite(dv) else np.nan for k, dv in dvth.items()}
-    area = loop_area(fwd.v_g, fwd.i_d, bwd.v_g, bwd.i_d, noise_floor)
-    return HysteresisResult(curve.name, rf, rb, dvth, n_trap, area, noise_floor)
+    notes: dict[str, str] = {}
+    try:
+        area = loop_area(fwd.v_g, fwd.i_d, bwd.v_g, bwd.i_d, noise_floor)
+    except ExtractionError as exc:
+        area, notes["loop_area"] = np.nan, str(exc)
+    return HysteresisResult(curve.name, rf, rb, dvth, n_trap, area, noise_floor, notes)

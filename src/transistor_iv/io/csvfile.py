@@ -41,15 +41,17 @@ def transfer_from_dataframe(df: pd.DataFrame, name: str, headers: dict[str, str]
     idx = _columns(df, ("v_g", "i_d", "v_d", "i_g"), headers)
     if idx["v_g"] is None or idx["i_d"] is None:
         raise ValueError(f"{name}: no gate-voltage or drain-current column among {list(df.columns)}")
-    data = df.to_numpy(dtype=float)
+    def col(q):
+        return df.iloc[:, idx[q]].to_numpy(dtype=float)
+
     v_d = float("nan")
     if idx["v_d"] is not None:
-        vd = data[:, idx["v_d"]]
-        if np.ptp(vd) > BIAS_TOLERANCE:
+        vd = col("v_d")
+        if np.ptp(vd) > max(BIAS_TOLERANCE, 0.01 * np.max(np.abs(vd))):
             raise ValueError(f"{name}: V_d varies by {np.ptp(vd):g} V; a transfer curve needs a constant drain bias")
         v_d = float(np.median(vd))
-    i_g = data[:, idx["i_g"]] if idx["i_g"] is not None else None
-    return TransferCurve(name, data[:, idx["v_g"]], data[:, idx["i_d"]], v_d, i_g)
+    i_g = col("i_g") if idx["i_g"] is not None else None
+    return TransferCurve(name, col("v_g"), col("i_d"), v_d, i_g)
 
 
 def read_transfer_csv(path: str | Path, headers: dict[str, str] | None = None, v_d: float | None = None) -> TransferCurve:
@@ -84,9 +86,8 @@ def read_output_csv(path: str | Path, headers: dict[str, str] | None = None) -> 
     idx = _columns(df, ("v_g", "v_d", "i_d"), headers)
     if None in idx.values():
         raise ValueError(f"{path}: need gate-voltage, drain-voltage and drain-current columns, got {list(df.columns)}")
-    data = df.to_numpy(dtype=float)
-    vg_col = data[:, idx["v_g"]]
+    vg_col, vd_col, id_col = (df.iloc[:, idx[q]].to_numpy(dtype=float) for q in ("v_g", "v_d", "i_d"))
     levels = pd.unique(vg_col)
-    v_d = [data[vg_col == g, idx["v_d"]] for g in levels]
-    i_d = [data[vg_col == g, idx["i_d"]] for g in levels]
+    v_d = [vd_col[vg_col == g] for g in levels]
+    i_d = [id_col[vg_col == g] for g in levels]
     return OutputFamily(path.stem, np.asarray(levels, dtype=float), v_d, i_d)

@@ -29,9 +29,13 @@ on the interpolated grid (smoothed over `gm_window`, default 1.6 V);
 
 $$\mu_{eff}(V_g) = \frac{L\,|I_d|}{W C_i |V_d|\,|V_g - V_{th}|},$$
 
-with V_th = `vth_interpol` and NaN where |V_g - V_th| <= `min_overdrive` (1 V), where
-the expression diverges. (Point-wise, as in the original scripts; the V_d/2 term of the
-linear-regime current is neglected.)
+with V_th = `vth_interpol` (`mobility_vth`) and NaN where |V_g - V_th| <= `min_overdrive`
+(1 V), where the expression diverges. The linear-regime current is
+(W C_i mu / L)(V_g - V_th - V_d/2) V_d; because `vth_interpol` is the raw extrapolated
+intercept V_gi = V_th + V_d/2, the denominator V_g - V_gi already contains the V_d/2 term.
+For this reason mu_eff and mu_sat always use the threshold before the
+[V_d/2 correction](threshold_voltage.md#the-v_d2-correction-option), also when
+`vd_correction=True`.
 
 ## Saturation mobility
 
@@ -39,7 +43,7 @@ Point-wise, `curves["mu_sat"]`:
 
 $$\mu_{sat}(V_g) = \frac{2L\,|I_d|}{W C_i (V_g - V_{th})^2},$$
 
-with V_th = `vth_interpol`, NaN where |V_g - V_th| <= 1 V.
+with V_th = `vth_interpol` (`mobility_vth`), NaN where |V_g - V_th| <= 1 V.
 
 From the square-root fit, `mu_sat_sqrt`: with b the slope of the line through
 sqrt|I_d| found by [`vth_sqrt`](threshold_voltage.md#square-root-extrapolation-vth_sqrt),
@@ -70,6 +74,17 @@ density: g_m then keeps rising to the end of the sweep and `mu_fe_max` is just i
 point, while the fitted g_m at a stated V_g is well defined and noise-free. Take b and
 V_th from `result.fits["vth_sqrt"]` (`slope`, `vth`) or from an explicit fit range.
 
+## Parameters
+
+| `TransferSettings` field | default | used by |
+|---|---|---|
+| `gm_window` | 1.6 V (`None` = unsmoothed) | g_m, mu_lin, `mu_fe_max` |
+| `mobility_vth` | `"vth_interpol"` | V_th of the point-wise mu_eff and mu_sat (any V_th field) |
+| `min_overdrive` | 1.0 V | mu_eff, mu_sat are NaN where \|V_g - V_th\| <= this |
+| `linear_window` | 5.0 V | the square-root fit behind `mu_sat_sqrt` |
+
+Device geometry and C_i come from the `Device`; V_d from the curve.
+
 ## Validity and pitfalls
 
 * **Regime.** mu_lin and mu_eff need |V_d| << V_g - V_th; mu_sat needs
@@ -79,7 +94,9 @@ V_th from `result.fits["vth_sqrt"]` (`slope`, `vth`) or from an explicit fit ran
   (see [api.md](api.md#diagnostics--transistor_ivdiagnostics)). This is listed for the author's decision in
   [changes_from_original.md](changes_from_original.md).
 * **Mixed regimes.** The point-wise mu_eff and mu_sat use `vth_interpol`, a linear-regime
-  extrapolation (figure, panel b).
+  extrapolation (figure, panel b), which also fails on concave curves
+  ([threshold voltage](threshold_voltage.md#linear-fit-next-to-the-subthreshold-region-vth_interpol));
+  choose another with `mobility_vth`.
 * **Maximum of a noisy curve.** `mu_fe_max` is a maximum: noise raises it, see
   [transconductance](transconductance_and_on_off.md).
 * **Contact resistance** lowers g_m and the apparent mobility; **gate-dependent mobility**

@@ -34,7 +34,7 @@ def main(cfg: AppConfig) -> None:
     save(plot.plot_analysis(analyze_transfer(c, dev)), "example_analysis", dpi=110)
     loop = read_clarius_transfer(DATA / cfg.loop_file)[cfg.loop_sheet]
     h = analyze_hysteresis(loop, dev, TransferSettings(), segments=cfg.loop_segments)
-    save(plot.plot_hysteresis(h, "vth_current"), "example_hysteresis", dpi=120)
+    save(plot.plot_hysteresis(h), "example_hysteresis", dpi=120)
     fam = read_clarius_output(DATA / cfg.output_file)[cfg.output_sheet]
     save(plot.plot_output(fam), "example_output", dpi=120)
     plt.close("all")

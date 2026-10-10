@@ -101,3 +101,12 @@ def test_settings_are_validated():
         TransferSettings(ss_method="minimum")
     with pytest.raises(ValueError, match="current_window"):
         TransferSettings(ss_method="current_window")
+
+
+def test_window_too_small_for_the_data_gives_nan_with_a_note(device):
+    s = device.sign
+    c = transfer_sweep(s * np.arange(-10, 20.01, 0.5), s * 0.1, device, s * VTH, SS, MU)
+    r = analyze_transfer(c, device, TransferSettings(grid_step=None, d2_window=1.0, gm_window=1.0))
+    assert np.isnan(r.vth_d2) and "fewer than 5 samples" in r.notes["vth_d2"]
+    assert np.isnan(r.mu_fe_max) and "gm" in r.notes
+    assert np.isfinite(r.vth_global)

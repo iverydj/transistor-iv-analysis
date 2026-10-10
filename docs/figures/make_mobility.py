@@ -16,6 +16,10 @@ class AppConfig:
     gm_window: float = 1.6       # V, the default
     real_file: str = "TC_example1.xls"
     real_sheet: int = 1
+    # window study printed by study(): random model devices, 0.2 V steps from -20 to 30 V, V_d = 0.1 V
+    study_devices: int = 60
+    study_windows: tuple = (None, 1.6, 3.0)
+    study_seed: int = 1
 
 
 def fig_gm(cfg):
@@ -62,9 +66,32 @@ def fig_mobilities(cfg):
     save(fig, "mobility_curves")
 
 
+def study(cfg):
+    """Bias of mu_fe_max vs gm_window: flat g_m with 0.3 % noise, peaked g_m (theta = 0.05 1/V) without noise."""
+    from transistor_iv import Device
+    from transistor_iv.synthetic import transfer_sweep
+    dev = Device.from_dielectric(100, 10, 3.9, 100, "n")
+    rng = np.random.default_rng(cfg.study_seed)
+    v = np.arange(-20, 30.001, 0.2)
+    err = {(case, w): [] for case in ("flat, 0.3 % noise", "peaked, no noise") for w in cfg.study_windows}
+    for k in range(cfg.study_devices):
+        vth, ss, mu = rng.uniform(-3, 3), rng.uniform(100, 400), rng.uniform(1, 50)
+        for case, noise, theta in (("flat, 0.3 % noise", 0.003, 0.0), ("peaked, no noise", 0.0, 0.05)):
+            c = transfer_sweep(v, 0.1, dev, vth, ss, mu, i_leak=1e-13, noise_rel=noise, noise_abs=1e-13 if noise else 0,
+                               seed=k, theta=theta)
+            fine = transfer_sweep(np.arange(-20, 30.001, 0.002), 0.1, dev, vth, ss, mu, theta=theta)
+            true = np.gradient(fine.i_d, fine.v_g).max() / (dev.w_over_l * dev.c_i * 0.1)
+            for w in cfg.study_windows:
+                r = analyze_transfer(c, dev, TransferSettings(gm_window=w))
+                err[(case, w)].append(r.mu_fe_max / true - 1)
+    for (case, w), e in err.items():
+        print(f"mu_fe_max error, {case}, gm_window={w}: median {np.median(e) * 100:+.1f} %")
+
+
 def main(cfg: AppConfig) -> None:
     fig_gm(cfg)
     fig_mobilities(cfg)
+    study(cfg)
     plt.close("all")
 
 

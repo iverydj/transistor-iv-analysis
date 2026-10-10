@@ -27,9 +27,9 @@ the longest run of consecutive grid points with
 $$\frac{d\log_{10}|I_d|}{dV_g} \ge 10^{-\text{sensitivity}} \ \text{dec/V},$$
 
 default `ss_sensitivity = 1.4`, i.e. 0.040 dec/V (a point-wise swing of at most
-25 V/dec). A larger sensitivity widens the region. Of equally long runs the first (lowest
-on-direction V_g) is taken. The region is also used by `vth_interpol` and
-`vth_logderivative`.
+25 V/dec). A larger sensitivity widens the region. Of equally long runs the one at the
+lowest V_g is taken. "Longest" counts grid points, not volts. The region is also used by
+`vth_interpol` and `vth_logderivative`.
 
 The criterion selects "where the current rises noticeably", which includes the lower
 part of the on-state: above threshold in the linear regime the log slope is
@@ -118,6 +118,13 @@ shortest decade (orange span) and the line fit in 10 pA to 1 nA (green). All thr
   point-wise SS follows every noise fluctuation, and taking the minimum selects the most
   favourable one. Smooth the spline (`spline_smoothing`), use the decade-span or
   current-window rule, or report the region of the minimum.
+* **The longest run can be in the on-state.** On noisy data single grid points of the
+  subthreshold characteristic can fall below 0.040 dec/V and split it into short runs; the
+  longest run is then a stretch of the on-state, and SS is meaningless (thousands of mV/dec).
+  This happens in particular on the alternating 0.2/0.05 V grid of 0.25 V data. `analyze_transfer`
+  adds the note `ss_on_state` when SS was taken above 1 % of I_on; then use `grid_step=None`,
+  `ss_sensitivity`, or the decade-span or current-window rule. (A bundled example is listed in
+  [changes_from_original.md](changes_from_original.md), D10.)
 * **Exit from the noise floor.** A step from the noise floor into the subthreshold
   region (instrument range change, a single spike) can produce a very steep point-wise
   slope at the start of the region. Check `TransferResult.swing.v_range` against the plot.

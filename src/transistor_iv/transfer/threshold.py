@@ -31,7 +31,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from .._numerics import linear_fit, local_quadratic, sliding_linear_fits
+from .._numerics import argext_low_v, linear_fit, local_quadratic, sliding_linear_fits
 from ..errors import ExtractionError
 from ..sweep import on_direction
 from .interpolation import InterpolatedCurve
@@ -74,7 +74,7 @@ def _fit(curve: InterpolatedCurve, y: np.ndarray, start: int, n: int, what: str)
 
 
 def _best_window(curve: InterpolatedCurve, y: np.ndarray, n: int, starts: range, score: str) -> int:
-    """Start index of the window with the highest score (first of equal ones).
+    """Start index of the window with the highest score (of equal ones, the one at the lowest V_g).
 
     ``score='r'``: |r|; ``score='r_slope'``: |r| * |slope|.
     """
@@ -85,7 +85,7 @@ def _best_window(curve: InterpolatedCurve, y: np.ndarray, n: int, starts: range,
     if idx.size == 0:
         return starts.start
     val = np.abs(r[idx]) if score == "r" else np.abs(r[idx]) * np.abs(slope[idx])
-    return int(idx[np.argmax(val)])
+    return int(idx[argext_low_v(val, curve.s)])
 
 
 def vth_constant_current(v_g, i_d, polarity: str, i_crit: float = 1e-8,
@@ -163,9 +163,10 @@ def vth_max_log_slope(curve: InterpolatedCurve, region: SubthresholdRegion) -> f
 
     This is where the point-wise swing is smallest, i.e. the steepest point of
     the subthreshold region; it lies below the strong-inversion threshold.
+    Ties between equal values (here and in every method) go to the lowest V_g.
     """
     sl = slice(region.start, region.end + 1)
-    k = int(np.argmax(curve.dlog[sl]))
+    k = argext_low_v(curve.dlog[sl], curve.s)
     return float(curve.s * curve.u[sl][k])
 
 
@@ -190,7 +191,7 @@ def vth_second_derivative(curve: InterpolatedCurve, window: float | None = None)
     if curve.u.size < 5:
         raise ExtractionError("second derivative: fewer than 5 grid points")
     d2 = second_derivative(curve, window)
-    return float(curve.s * curve.u[int(np.argmax(d2))])
+    return float(curve.s * curve.u[argext_low_v(d2, curve.s)])
 
 
 def vth_max_gm_tangent(curve: InterpolatedCurve, gm: np.ndarray) -> LineFit:
@@ -201,7 +202,7 @@ def vth_max_gm_tangent(curve: InterpolatedCurve, gm: np.ndarray) -> LineFit:
     on-direction transconductance on the grid
     (:func:`transistor_iv.transfer.transconductance.transconductance`).
     """
-    k = int(np.argmax(gm))
+    k = argext_low_v(gm, curve.s)
     g = float(gm[k])
     if g <= 0:
         raise ExtractionError("gm tangent: g_m is not positive anywhere")

@@ -22,10 +22,10 @@ threshold voltage; (c) the linear mobility from the transconductance and its max
 
 ## What it extracts
 
-* **Threshold voltage**, seven methods: constant current, linear fit next to the
-  subthreshold region, best linear window, tangent at maximum g_m, maximum log slope,
-  second derivative, square-root extrapolation; optional V_d/2 correction
-  ([docs](docs/threshold_voltage.md)).
+* **Threshold voltage**: the six methods of the original scripts (constant current, linear
+  fit next to the subthreshold region, best linear window, maximum log slope, second
+  derivative, square-root extrapolation) plus the tangent at maximum g_m; optional V_d/2
+  correction ([docs](docs/threshold_voltage.md)).
 * **Subthreshold swing**: point-wise minimum in the subthreshold region (with a 60 mV/dec
   floor by default), shortest decade, or a stated current window ([docs](docs/subthreshold_swing.md)).
 * **Transconductance and on/off ratio**: smoothed g_m, I_on, I_off ([docs](docs/transconductance_and_on_off.md)).
@@ -67,11 +67,11 @@ from transistor_iv import plot
 dev = tiv.Device.from_dielectric(width_um=100, length_um=10, eps_r=3.9, thickness_nm=100, polarity="n")
 
 curve = tiv.read_clarius_transfer("examples/data/TC_example2.xls")[0]   # or tiv.read_transfer_csv("my.csv")
-res = tiv.analyze_transfer(curve, dev)                                   # defaults: tiv.TransferSettings()
+res = tiv.analyze_transfer(curve, dev)                                   # settings: tiv.TransferSettings()
 
-print(res.vth_current, res.vth_global, res.vth_sqrt)   # V
+print(res.vth_current, res.vth_global)                # V; V_d = 10 V here: no saturation method
 print(res.ss, res.on_off, res.mu_fe_max)               # mV/dec, -, cm^2/(V s)
-print(res.fits["vth_global"].v_range, res.notes)       # where the line was fitted, why values are missing
+print(res.fits["vth_global"].v_range, res.notes)       # where the line was fitted; notes on missing or doubtful values
 plot.plot_analysis(res).savefig("analysis.png")
 ```
 

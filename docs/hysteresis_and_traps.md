@@ -31,7 +31,11 @@ a transfer curve swept forward and back:
    evaluated on the forward branch's V_g points within the range common to both branches
    (the backward log current interpolated linearly there), over the points where both
    currents exceed `noise_floor` (default 1e-12 A), with the trapezoidal rule.
-   A > 0 when the forward branch carries more current.
+   A > 0 when the forward branch carries more current. If fewer than 2 points are above the
+   floor, A is NaN with a note in `HysteresisResult.notes`.
+
+`plot_hysteresis(result, vth_key="vth_current")` draws both branches with the chosen
+threshold.
 
 ![Hysteresis](figures/hysteresis.png)
 
@@ -76,5 +80,6 @@ D_it = 5.1e11 cm⁻² eV⁻¹. Below the thermionic limit the formula does not a
 **Pitfalls.** The depletion capacitance of the semiconductor is neglected (adequate for
 thin, fully depleted channels such as oxide TFTs and 2D materials; otherwise D_it is an
 upper bound). D_it inherits every uncertainty of SS ([subthreshold_swing.md](subthreshold_swing.md)):
-the selection rule, the noise and the sampling. It is an average over the energies swept by
-the Fermi level in the subthreshold region.
+the selection rule, the noise and the sampling. With the point-wise and decade-span rules SS
+is the steepest part of the subthreshold region, so D_it is the smallest local value there;
+only the current-window rule averages over a stated range of the subthreshold current.

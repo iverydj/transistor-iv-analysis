@@ -78,3 +78,18 @@ def local_quadratic(x: np.ndarray, y: np.ndarray, width: float) -> tuple[np.ndar
     rhs = np.stack([np.sum(yy * dx ** m, axis=1) for m in range(3)], axis=-1)    # (n, 3)
     coef = np.linalg.solve(gram, rhs[..., None])[..., 0]
     return coef[:, 0], coef[:, 1], 2.0 * coef[:, 2]
+
+
+def argext_low_v(values: np.ndarray, s: int, kind: str = "max") -> int:
+    """Index of the maximum (or minimum) of ``values`` given on an ascending on-direction grid.
+
+    Ties are resolved towards the lowest V_g (the first index for n-type, s = +1;
+    the last for p-type, s = -1), i.e. as in the original scripts, which worked
+    in ascending V_g for both polarities.
+    """
+    v = np.asarray(values)
+    if kind == "min":
+        v = -v
+    if s == 1:
+        return int(np.argmax(v))
+    return int(v.size - 1 - np.argmax(v[::-1]))

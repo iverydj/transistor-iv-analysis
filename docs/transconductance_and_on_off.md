@@ -29,17 +29,21 @@ with spiky on-currents (bundled `TC_example1.xls`): 1410 vs 341 (geometry from
 `Conditions.xls`, SiO2 assumed).*
 
 **Why smoothing is the default.** The maximum of a noisy derivative is a biased
-estimator: it picks the largest noise excursion. On the bundled example files the
-unsmoothed maximum of the original scripts is a median 2.7 times (up to 5 times) the
-smoothed one on `TC_example1.xls`, 1.3 % above it on `TC_example2.xls` and 3 % on
-`TC_example5.xls`. This is the bug fix listed in [changes_from_original.md](changes_from_original.md).
+estimator: it picks the largest noise excursion (panel a). This is fix B8 in
+[changes_from_original.md](changes_from_original.md), where its effect on the bundled files
+is listed; `gm_window=None` restores the original unsmoothed derivative.
 
 **Choosing the window.** A wider window suppresses noise more but flattens a peaked g_m.
-On model curves with 0.3 % noise and a flat g_m (constant mobility) the maximum is
-overestimated by a median 61 % without smoothing, 12 % with 1.6 V and 5 % with 3 V; with a
-peaked g_m (mobility degradation theta = 0.05 1/V, no noise) it is underestimated by 4 %
-with 1.6 V and 8 % with 3 V. The default 1.6 V equals the 9-point Savitzky-Golay filter
-on 0.2 V steps.
+For 60 random model devices (V_th -3 to 3 V, SS 100 to 400 mV/dec, mu 1 to 50 cm²/Vs,
+0.2 V steps from -20 to 30 V, V_d = 0.1 V; `study()` in `figures/make_mobility.py`):
+
+| g_m shape | `gm_window=None` | 1.6 V (default) | 3.0 V |
+|---|---|---|---|
+| flat (constant mobility), 0.3 % noise | +61 % | +12 % | +5 % |
+| peaked (mobility degradation theta = 0.05 1/V), no noise | -1 % | -4 % | -8 % |
+
+*Median error of `mu_fe_max` relative to the true maximum of mu_lin.* The default 1.6 V
+equals the 9-point Savitzky-Golay filter on 0.2 V steps.
 
 **Pitfalls.** On a flat g_m plateau even the smoothed maximum is biased upwards by the
 noise; for such curves report g_m (or mu) at a fixed V_g (`gm_at`) or averaged over a

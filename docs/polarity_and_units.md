@@ -37,7 +37,7 @@ With s = +1 (n) or -1 (p), every method works in the **on-direction frame**
 $$u = s\,V_g \ (\text{ascending}), \qquad a = |I_d|,$$
 
 in which the current increases with u for both polarities. A p-type curve is therefore
-analysed exactly like the mirror image of an n-type curve, and voltages are mapped back with
+analysed like the mirror image of an n-type curve, and voltages are mapped back with
 V = s u. Consequences:
 
 * threshold voltages are reported in the measured V_g frame (typically negative for p-type);
@@ -46,7 +46,11 @@ V = s u. Consequences:
 * V_d is signed (p-type devices are normally measured with V_d < 0); formulas use |V_d|,
   and the V_d/2 correction uses the signed value;
 * a p-type curve and the exact mirror of an n-type curve (V_g, I_d, V_d -> -V_g, -I_d, -V_d)
-  give exactly mirrored results (tested).
+  give exactly mirrored results when the interpolation grid needs no inserted points
+  (tested); otherwise the inserted points are anchored at the lower-V_g end of each gap for
+  both polarities, as in the original scripts ([interpolation](interpolation.md));
+* ties between equal values (equally long subthreshold runs, equally good windows) are
+  resolved towards the lowest V_g, as in the original scripts.
 
 ![Polarity](figures/polarity.png)
 
