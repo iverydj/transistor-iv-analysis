@@ -22,11 +22,14 @@ g_m at a stated gate voltage.
 
 ![gm smoothing](figures/gm_smoothing.png)
 
-*Linear mobility mu_lin = L g_m / (W C_i |V_d|) from the unsmoothed and the smoothed g_m.
-(a) Model device with 0.3 % multiplicative noise (true mu = 10 cm²/Vs): the maximum of
-the unsmoothed curve is 18.6, of the smoothed one 10.3. (b) A measured oxide-TFT curve
-with spiky on-currents (bundled `TC_example1.xls`): 1410 vs 341 (geometry from
-`Conditions.xls`, SiO2 assumed).*
+*Unsmoothed and smoothed transconductance. (a) Linear mobility
+mu_lin = L g_m / (W C_i |V_d|) of the model device with 0.3 % multiplicative noise (true
+mu = 10 cm²/Vs): the maximum of the unsmoothed curve is 18.6, of the smoothed one 10.3.
+(b) g_m of a measured MoS2 FET (bundled `TC_example5.xls`, sheet `MoS2_0326_ss2`, forward
+sweep, V_d = 0.1 V; shown in nS because the file carries no geometry): the smoothed curve
+follows the on-state, the unsmoothed maximum (14.7 nS) is the last noise excursion of the
+sweep, the smoothed one 12.4 nS. On this convex curve both maxima lie at the end of the
+sweep (see the pitfalls below).*
 
 **Why smoothing is the default.** The maximum of a noisy derivative is a biased
 estimator: it picks the largest noise excursion (panel a). This is fix B8 in

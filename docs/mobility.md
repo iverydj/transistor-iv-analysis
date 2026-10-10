@@ -91,8 +91,8 @@ Device geometry and C_i come from the `Device`; V_d from the curve.
   |V_d| >= |V_g - V_th|. `analyze_transfer` computes every formula for every curve;
   choosing the one that matches the measurement is the user's job.
   `TransferSettings(diagnostics=True)` adds `flag_linear_regime` and `flag_saturation`
-  (see [api.md](api.md#diagnostics--transistor_ivdiagnostics)). This is listed for the author's decision in
-  [changes_from_original.md](changes_from_original.md).
+  (see [api.md](api.md#diagnostics--transistor_ivdiagnostics)). Known limitation L4 in
+  [changes_from_original.md](changes_from_original.md#known-limitations-of-the-default-rules).
 * **Mixed regimes.** The point-wise mu_eff and mu_sat use `vth_interpol`, a linear-regime
   extrapolation (figure, panel b), which also fails on concave curves
   ([threshold voltage](threshold_voltage.md#linear-fit-next-to-the-subthreshold-region-vth_interpol));

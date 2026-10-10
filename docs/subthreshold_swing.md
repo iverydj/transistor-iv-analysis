@@ -105,8 +105,8 @@ shortest decade (orange span) and the line fit in 10 pA to 1 nA (green). All thr
   tunnel, impact-ionisation FETs) and measurements below room temperature have a genuine
   SS below 60 mV/dec. With the default floor the point-wise rule can only report values
   >= 60 mV/dec, and it reports the next value above the floor, which can be far from the
-  true one. Use `ss_floor=None` (and `thermal_ss_limit(T)` for the temperature). This
-  default is listed for the author's decision in [changes_from_original.md](changes_from_original.md).
+  true one. Use `ss_floor=None` (and `thermal_ss_limit(T)` for the temperature). Known
+  limitation L2 in [changes_from_original.md](changes_from_original.md#known-limitations-of-the-default-rules).
 
   ![Floor](figures/ss_floor.png)
 
@@ -123,8 +123,8 @@ shortest decade (orange span) and the line fit in 10 pA to 1 nA (green). All thr
   longest run is then a stretch of the on-state, and SS is meaningless (thousands of mV/dec).
   This happens in particular on the alternating 0.2/0.05 V grid of 0.25 V data. `analyze_transfer`
   adds the note `ss_on_state` when SS was taken above 1 % of I_on; then use `grid_step=None`,
-  `ss_sensitivity`, or the decade-span or current-window rule. (A bundled example is listed in
-  [changes_from_original.md](changes_from_original.md), D10.)
+  `ss_sensitivity`, or the decade-span or current-window rule. (A bundled example is
+  given under known limitation L8 in [changes_from_original.md](changes_from_original.md#known-limitations-of-the-default-rules).)
 * **Exit from the noise floor.** A step from the noise floor into the subthreshold
   region (instrument range change, a single spike) can produce a very steep point-wise
   slope at the start of the region. Check `TransferResult.swing.v_range` against the plot.

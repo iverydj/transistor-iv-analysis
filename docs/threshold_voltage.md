@@ -94,8 +94,8 @@ bends down above threshold; the most linear window is then a nearly straight str
 the on-state, and its intercept lies far below V_th: on the model device -0.3 V, -2.2 V and
 -6.5 V for theta = 0.01, 0.02 and 0.05 1/V (V_th = 2 V), panel (c). `analyze_transfer` adds the
 note `vth_interpol_window` when the window starts above the g_m maximum; compare with
-`vth_global` and `vth_gm_tangent`. (Listed for the author's decision in
-[changes_from_original.md](changes_from_original.md), D9.)
+`vth_global` and `vth_gm_tangent`. (Known limitation L7 in
+[changes_from_original.md](changes_from_original.md#known-limitations-of-the-default-rules).)
 
 *Wide region.* The region criterion (0.040 dec/V) is not strictly subthreshold: in the
 linear regime the log slope above threshold is 1/[ln(10)(V_g - V_th - V_d/2)], which
@@ -168,8 +168,8 @@ threshold 10^-1.4 dec/V and the maximum.*
 below the strong-inversion threshold. It is a reproducible turn-on marker, but not a
 threshold voltage in the sense of the other methods. It is also different from the
 "transconductance-to-current ratio" method, which takes the minimum (negative peak) of the
-derivative of g_m/I_d. (This point is listed for the author's decision in
-[changes_from_original.md](changes_from_original.md).)
+derivative of g_m/I_d. (Known limitation L1 in
+[changes_from_original.md](changes_from_original.md#known-limitations-of-the-default-rules).)
 
 **Pitfalls.** On a nearly exponential subthreshold region the log slope is flat and the
 maximum is set by noise; a step or spike at the exit from the noise floor produces a
@@ -280,7 +280,7 @@ anyway.
 `vth_sqrt_extrapolation(curve, window)`, `elr_correction(vth, v_d)`; all in
 `transistor_iv.transfer`, see [api.md](api.md).
 
-References: A. Ortiz-Conde et al., *A review of recent MOSFET threshold voltage extraction
-methods*, Microelectron. Reliab. 42, 583 (2002); H.-S. Wong et al., *Modeling of
+References: A. Ortiz-Conde et al., Microelectron. Reliab. 42, 583 (2002), a survey of
+threshold-voltage extraction methods; H.-S. Wong et al., *Modeling of
 transconductance degradation and extraction of threshold voltage in thin oxide MOSFETs*,
 Solid-State Electron. 30, 953 (1987).

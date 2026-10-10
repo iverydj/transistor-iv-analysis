@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from common import DATA, DEVICE, INK, INK_2, MU, SERIES, linear_curve, saturation_curve, save, style_axes
-from transistor_iv import TransferSettings, analyze_transfer, read_clarius_transfer, read_conditions
+from transistor_iv import TransferSettings, analyze_transfer, read_clarius_transfer
 
 
 @dataclass
@@ -14,8 +14,9 @@ class AppConfig:
     noise_rel: float = 0.003
     seed: int = 3
     gm_window: float = 1.6       # V, the default
-    real_file: str = "TC_example1.xls"
-    real_sheet: int = 1
+    real_file: str = "TC_example5.xls"   # MoS2 FET: smooth on-state, visible derivative noise
+    real_sheet: int = 38
+    real_segment: int = 1                # forward sweep -30 -> 40 V
     # window study printed by study(): random model devices, 0.2 V steps from -20 to 30 V, V_d = 0.1 V
     study_devices: int = 60
     study_windows: tuple = (None, 1.6, 3.0)
@@ -27,18 +28,24 @@ def fig_gm(cfg):
     raw = analyze_transfer(c, DEVICE, TransferSettings(gm_window=None))
     smo = analyze_transfer(c, DEVICE, TransferSettings(gm_window=cfg.gm_window))
     real = read_clarius_transfer(DATA / cfg.real_file)[cfg.real_sheet]
-    dev = read_conditions(DATA / "Conditions.xls", eps_r=3.9)[cfg.real_sheet]
-    rr = analyze_transfer(real, dev, TransferSettings(gm_window=None))
-    rs = analyze_transfer(real, dev, TransferSettings(gm_window=cfg.gm_window))
+    rr = analyze_transfer(real, DEVICE, TransferSettings(segment=cfg.real_segment, gm_window=None))
+    rs = analyze_transfer(real, DEVICE, TransferSettings(segment=cfg.real_segment, gm_window=cfg.gm_window))
     fig, ax = plt.subplots(1, 2, figsize=(10, 3.8), constrained_layout=True)
-    for a, r0, r1, title in ((ax[0], raw, smo, f"(a) model device, {cfg.noise_rel * 100:g} % noise, true $\\mu$ = {MU:g}"),
-                             (ax[1], rr, rs, f"(b) {cfg.real_file}, sheet '{real.name}'")):
-        a.plot(r0.curves["v_g"], r0.curves["mu_lin"], color=INK_2, linewidth=0.7, label="gm_window=None (np.gradient)")
-        a.plot(r1.curves["v_g"], r1.curves["mu_lin"], color=SERIES[0], linewidth=1.6, label=f"gm_window={cfg.gm_window:g} V (default)")
-        a.plot(r0.v_gm_max, r0.mu_fe_max, "o", color=INK_2, ms=6, label=f"max {r0.mu_fe_max:.3g}")
-        a.plot(r1.v_gm_max, r1.mu_fe_max, "o", color=SERIES[1], ms=6, label=f"max {r1.mu_fe_max:.3g}")
-        style_axes(a, "$V_g$ (V)", r"$\mu_{lin}$ (cm$^2$ V$^{-1}$ s$^{-1}$)", title)
-        a.legend(fontsize=7, frameon=False, loc="upper left")
+    a = ax[0]
+    a.plot(raw.curves["v_g"], raw.curves["mu_lin"], color=INK_2, linewidth=0.7, label="gm_window=None (np.gradient)")
+    a.plot(smo.curves["v_g"], smo.curves["mu_lin"], color=SERIES[0], linewidth=1.6, label=f"gm_window={cfg.gm_window:g} V (default)")
+    a.plot(raw.v_gm_max, raw.mu_fe_max, "o", color=INK_2, ms=6, label=f"max {raw.mu_fe_max:.3g}")
+    a.plot(smo.v_gm_max, smo.mu_fe_max, "o", color=SERIES[1], ms=6, label=f"max {smo.mu_fe_max:.3g}")
+    style_axes(a, "$V_g$ (V)", r"$\mu_{lin}$ (cm$^2$ V$^{-1}$ s$^{-1}$)",
+               f"(a) model device, {cfg.noise_rel * 100:g} % noise, true $\\mu$ = {MU:g}")
+    a.legend(fontsize=7, frameon=False, loc="upper left")
+    a = ax[1]
+    a.plot(rr.curves["v_g"], rr.curves["gm"] * 1e9, color=INK_2, linewidth=0.7, label="gm_window=None (np.gradient)")
+    a.plot(rs.curves["v_g"], rs.curves["gm"] * 1e9, color=SERIES[0], linewidth=1.6, label=f"gm_window={cfg.gm_window:g} V (default)")
+    a.plot(rr.v_gm_max, rr.gm_max * 1e9, "o", color=INK_2, ms=6, label=f"max {rr.gm_max * 1e9:.3g} nS")
+    a.plot(rs.v_gm_max, rs.gm_max * 1e9, "o", color=SERIES[1], ms=6, label=f"max {rs.gm_max * 1e9:.3g} nS")
+    style_axes(a, "$V_g$ (V)", "$g_m$ (nS)", f"(b) {cfg.real_file}, sheet '{real.name}', forward sweep")
+    a.legend(fontsize=7, frameon=False, loc="upper left")
     save(fig, "gm_smoothing")
 
 
